@@ -14,7 +14,7 @@ abstain, not just raw accuracy, because a wrong tool call is often worse than no
 call at all.
 """
 from toolrouter.registry import Tool, ToolRegistry
-from toolrouter.router import RouteResult, Router
+from toolrouter.router import Router, RouteResult
 
 __all__ = ["Tool", "ToolRegistry", "Router", "RouteResult"]
 
