@@ -12,20 +12,23 @@
 > tool 5 out of 5 times. Confidence-gated routing abstains on all 5, with zero
 > cost to accuracy on the clear queries.** See it: `python -m toolrouter.eval`.
 
-Function calling is a lie of small numbers. With five tools it works great. With
-fifty it quietly falls apart: the agent picks the wrong tool, fabricates the
-arguments, and does it all with the serene confidence of someone who has no idea
-they are wrong. And a wrong tool call is not a harmless mistake. It sends the
-email. It writes the file. It runs the query.
+Function calling is a lie of small numbers. With five tools it works great,
+everybody demos it, everybody's happy. With fifty tools it quietly falls
+apart: the agent picks the wrong tool, fabricates the arguments to match, and
+does it all with the serene confidence of a guy explaining a stock tip he
+heard once. And a wrong tool call is not a harmless mistake you shrug off. It
+sends the email. It writes the file. It runs the query, on the wrong table,
+with your name on the commit.
 
-toolrouter is the missing piece: a tool selector that knows when it does not
-know. It retrieves candidate tools for a query, scores its confidence as the
-*margin* between the best tool and the runner-up, and abstains when that margin
-is thin. Abstaining routes to your fallback (ask a human, use a default,
-decline), which is almost always cheaper than a confident wrong call.
+toolrouter is the missing piece: a tool selector that actually knows when it
+doesn't know. It retrieves candidate tools for a query, scores its confidence
+as the *margin* between the best tool and the runner-up, and abstains when
+that margin is thin enough to be a coin flip. Abstaining routes to your
+fallback (ask a human, use a default, decline politely), which is almost
+always cheaper than a confident wrong call and an incident channel at 2am.
 
 No embeddings, no model, no API keys, no dependencies. The whole routing
-decision is a few lines of readable code you can audit.
+decision is a few lines of readable code, no black box, no vibes.
 
 ---
 
@@ -88,10 +91,12 @@ This is the one idea that matters. Confidence is not "how well did the top tool
 score." It is "how much did the top tool beat the second-best tool by."
 
 A tool that wins 0.9 to 0.1 is a confident pick. A tool that wins 0.42 to 0.40
-is a coin flip in a nice suit, and routing it is exactly how agents fire the
-wrong tool on ambiguous input. Gating on the margin catches those, and only
-those. Raise `min_confidence` to be more cautious, lower it to route more
-aggressively, and use the benchmark to find your line.
+is a coin flip wearing a nice suit and a fake ID, and routing it anyway is
+exactly how agents fire the wrong tool on ambiguous input. Gating on the
+margin catches those, and only those, so you're not paying caution tax on
+the queries that were never in doubt. Raise `min_confidence` to be more
+cautious, lower it to route more aggressively, and use the benchmark to find
+your line instead of guessing at 3am.
 
 ## Swap in a real retriever
 
