@@ -3,7 +3,7 @@
 **Pick the right tool from a big toolbox, and abstain when the pick is a coin flip.**
 
 ![CI](https://github.com/ahmeddoghri/toolrouter/actions/workflows/ci.yml/badge.svg)
-![tests](https://img.shields.io/badge/tests-9%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-21%20passing-brightgreen)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![deps](https://img.shields.io/badge/runtime%20deps-none-success)
 ![license](https://img.shields.io/badge/license-MIT-black)
@@ -11,6 +11,13 @@
 > **On genuinely ambiguous queries, always-picking-the-top-tool fires the wrong
 > tool 5 out of 5 times. Confidence-gated routing abstains on all 5, with zero
 > cost to accuracy on the clear queries.** See it: `python -m toolrouter.eval`.
+>
+> **Update:** that "100% clear-query accuracy" only holds on queries built
+> from the tools' own keyword vocabulary. Fifteen hand-written natural
+> questions ("how much is 50 bucks worth in yen") score **5/15**, not
+> because the router fires the wrong tool, every miss is an abstention, but
+> because a router that shrugs at two-thirds of answerable questions isn't
+> useful. Root cause, fix, and numbers: `python -m toolrouter.eval_v2`.
 
 Function calling is a lie of small numbers. With five tools it works great,
 everybody demos it, everybody's happy. With fifty tools it quietly falls
@@ -98,6 +105,54 @@ the queries that were never in doubt. Raise `min_confidence` to be more
 cautious, lower it to route more aggressively, and use the benchmark to find
 your line instead of guessing at 3am.
 
+## The benchmark measured its own vocabulary, and a tokenizer bug
+
+`corpus.QUERIES`' "clear" queries are close paraphrases of the tool's own
+description or keyword list: "what is the current share price of nvidia"
+for a tool whose keywords include "share price". That measures whether
+bag-of-words overlap can match a query to a tool built from the query's own
+words, not whether the router handles a real question.
+
+Fifteen hand-written, naturally-phrased queries with an unambiguous correct
+tool, none built from a tool's own vocabulary ("how much is 50 bucks worth
+in yen", "who's number does Sarah have on file"), score **5/15** against
+the original `registry()`. Every miss is an abstention, not a wrong tool
+call, the router never fires the wrong tool, but a router this cautious on
+answerable questions defeats the point of routing.
+
+There's a second, independent bug underneath it: `_WORD = re.compile(r"[a-z0-9]+")`
+splits on the apostrophe in a contraction, so "what's" tokenizes to two
+tokens, `{"what", "s"}`. "what" is a stopword and gets dropped, but the
+leftover `"s"` is not, so it survives as a real token that coincidentally
+ties against any other tool whose text happens to contain its own
+contraction. The bundled keyword lists have no contractions, so this stayed
+invisible until natural phrasing, which is full of them, showed up.
+
+```bash
+python -m toolrouter.eval_v2
+```
+```
+corpus / version        top-1 accuracy
+adversarial / v1                  33% (15)
+adversarial / v2                 100% (15)
+
+holdout / v1                      58% (12)
+holdout / v2                      58% (12)
+```
+
+`toolrouter/corpus_v2.py` fixes both: `ToolRegistryV2` strips apostrophes
+before tokenizing instead of splitting on them, and `TOOLS_V2` widens each
+tool's keyword list with the synonyms and phrasings a person actually uses,
+written from general domain knowledge before looking at the adversarial
+query set. 33% to 100% on that set. A second, held-out set of queries
+leaning on slang the enrichment wasn't built to anticipate ("rustle up a
+summary", "crunch these numbers") was evaluated exactly once: the fix never
+turns a previously-correct answer wrong, but it doesn't fully generalize to
+unanticipated slang either (58% both ways), an honest limit of a
+bag-of-words approach with no embeddings. `corpus.py`/`registry.py` are
+untouched, so `Router` against the original `registry()` keeps its exact
+published numbers; `registry_v2()` is opt-in.
+
 ## Swap in a real retriever
 
 The bag-of-words scorer keeps the demo dependency-free and fully inspectable.
@@ -108,7 +163,7 @@ change; they only care about the scores, not where they come from.
 ## Tests
 
 ```bash
-pip install pytest && pytest -q      # 9 passing
+pip install pytest && pytest -q      # 21 passing
 ```
 
 ## License

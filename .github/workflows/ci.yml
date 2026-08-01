@@ -28,3 +28,5 @@ jobs:
         run: python examples/quickstart.py
       - name: Run benchmark
         run: python -m toolrouter.eval
+      - name: Run natural-language comparison
+        run: python -m toolrouter.eval_v2
