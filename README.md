@@ -2,7 +2,6 @@
 
 **Pick the right tool from a big toolbox, and abstain when the pick is a coin flip.**
 
-![CI](https://github.com/ahmeddoghri/toolrouter/actions/workflows/ci.yml/badge.svg)
 ![tests](https://img.shields.io/badge/tests-21%20passing-brightgreen)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![deps](https://img.shields.io/badge/runtime%20deps-none-success)
