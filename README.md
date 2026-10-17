@@ -2,10 +2,13 @@
 
 **Pick the right tool from a big toolbox, and abstain when the pick is a coin flip.**
 
-![tests](https://img.shields.io/badge/tests-21%20passing-brightgreen)
+[![tests](https://github.com/ahmeddoghri/toolrouter/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmeddoghri/toolrouter/actions/workflows/tests.yml)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![deps](https://img.shields.io/badge/runtime%20deps-none-success)
 ![license](https://img.shields.io/badge/license-MIT-black)
+[![case study](https://img.shields.io/badge/case%20study-adoghri.com-e0703e)](https://adoghri.com/project-16.html)
+
+![toolrouter](docs/cover.jpg)
 
 > **On genuinely ambiguous queries, always-picking-the-top-tool fires the wrong
 > tool 5 out of 5 times. Confidence-gated routing abstains on all 5, with zero
