@@ -1,4 +1,4 @@
-# 🧭 toolrouter
+# toolrouter
 
 **Pick the right tool from a big toolbox, and abstain when the pick is a coin flip.**
 
@@ -165,7 +165,7 @@ change; they only care about the scores, not where they come from.
 ## Tests
 
 ```bash
-pip install pytest && pytest -q      # 21 passing
+pip install pytest && pytest -q      # 22 passing
 ```
 
 ## License

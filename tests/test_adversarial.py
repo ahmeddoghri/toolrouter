@@ -118,3 +118,15 @@ def test_report_is_reproducible():
 def test_report_shows_v2_beating_v1_on_adversarial():
     report = build_report()
     assert report["adversarial"]["v2"]["top1_accuracy"] > report["adversarial"]["v1"]["top1_accuracy"]
+
+
+def test_wrong_calls_are_counted_separately_from_abstentions():
+    from toolrouter.eval_v2 import build_report
+
+    report = build_report()
+    # On the tuning set, v2 never fires a wrong tool.
+    assert report["adversarial"]["v2"]["wrong_calls"] == 0
+    # The held-out regression stays visible rather than hidden in accuracy:
+    # v2 turns one safe abstention ("crunch these numbers") into a wrong call.
+    assert report["holdout"]["v1"]["wrong_calls"] == 1
+    assert report["holdout"]["v2"]["wrong_calls"] == 2

@@ -24,16 +24,28 @@ from .router import Router
 
 def _route_all(reg, items: Sequence[AdversarialItem], min_confidence: float = 0.15) -> Dict:
     router = Router(reg, min_confidence=min_confidence)
-    correct = 0
+    correct = abstained = wrong = 0
     misses: List[str] = []
     for item in items:
         r = router.route(item.query)
         got = "ABSTAIN" if r.abstained else r.tool.name
         if got == item.expected:
             correct += 1
+            continue
+        # An abstention asks for help; a wrong call has side effects. They are
+        # different failures and are counted separately.
+        if r.abstained:
+            abstained += 1
         else:
-            misses.append(f"got={got} expected={item.expected}  {item.query}")
-    return {"top1_accuracy": round(correct / len(items), 4), "n": len(items), "misses": misses}
+            wrong += 1
+        misses.append(f"got={got} expected={item.expected}  {item.query}")
+    return {
+        "top1_accuracy": round(correct / len(items), 4),
+        "n": len(items),
+        "abstained": abstained,
+        "wrong_calls": wrong,
+        "misses": misses,
+    }
 
 
 def build_report() -> Dict:
@@ -53,14 +65,18 @@ def format_report(report: Dict) -> str:
     lines = [
         "natural-language routing accuracy (not lifted from tool vocabulary)",
         "=" * 70,
-        f"{'corpus / version':<20}{'top-1 accuracy':>18}",
+        f"{'corpus / version':<20}{'top-1 accuracy':>18}{'abstained':>12}{'wrong calls':>13}",
         "-" * 70,
     ]
     for corpus_name in ("adversarial", "holdout"):
         for v in ("v1", "v2"):
             row = report[corpus_name][v]
-            lines.append(f"{corpus_name + ' / ' + v:<20}{row['top1_accuracy']:>17.0%} ({row['n']})")
+            lines.append(
+                f"{corpus_name + ' / ' + v:<20}{row['top1_accuracy']:>12.0%} ({row['n']:>2})"
+                f"{row['abstained']:>12}{row['wrong_calls']:>13}"
+            )
         lines.append("")
+    lines.append("wrong calls = a tool fired that the user did not ask for; abstained = it asked instead.")
     return "\n".join(lines)
 
 
