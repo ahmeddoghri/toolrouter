@@ -134,12 +134,12 @@ invisible until natural phrasing, which is full of them, showed up.
 python -m toolrouter.eval_v2
 ```
 ```
-corpus / version        top-1 accuracy
-adversarial / v1                  33% (15)
-adversarial / v2                 100% (15)
+corpus / version        top-1 accuracy   abstained  wrong calls
+adversarial / v1             33% (15)          10            0
+adversarial / v2            100% (15)           0            0
 
-holdout / v1                      58% (12)
-holdout / v2                      58% (12)
+holdout / v1                 58% (12)           4            1
+holdout / v2                 58% (12)           3            2
 ```
 
 `toolrouter/corpus_v2.py` fixes both: `ToolRegistryV2` strips apostrophes
@@ -148,10 +148,15 @@ tool's keyword list with the synonyms and phrasings a person actually uses,
 written from general domain knowledge before looking at the adversarial
 query set. 33% to 100% on that set. A second, held-out set of queries
 leaning on slang the enrichment wasn't built to anticipate ("rustle up a
-summary", "crunch these numbers") was evaluated exactly once: the fix never
-turns a previously-correct answer wrong, but it doesn't fully generalize to
-unanticipated slang either (58% both ways), an honest limit of a
-bag-of-words approach with no embeddings. `corpus.py`/`registry.py` are
+summary", "crunch these numbers") was evaluated exactly once, and the fix bought nothing there:
+58% both ways. Worse, it turned one safe abstention into a wrong call.
+"Crunch these numbers real quick" used to abstain; v2 routes it to
+`pdf_extract`, because the PDF tool's enriched keywords include "pull the
+numbers". Wrong calls on the holdout go from 1 to 2. That is not patched,
+because tuning against a holdout after reading it is how it stops being one.
+It stands as the documented limit: **keyword enrichment raises recall on the
+phrasings you anticipated and can create new collisions on the ones you
+didn't**, which is exactly the job an embedding retriever should take over. `corpus.py`/`registry.py` are
 untouched, so `Router` against the original `registry()` keeps its exact
 published numbers; `registry_v2()` is opt-in.
 
